@@ -177,7 +177,11 @@ def plot_ROI(veritas=None, fermi=None):
     if veritas is not None:
         ax = veritas._exclusion_mask.plot()
         veritas._on_region.to_pixel(ax.wcs).plot(ax=ax, edgecolor="red")
-        plot_spectrum_datasets_off_regions(ax=ax, datasets=veritas.datasets)
+        # Try/except to catch the gammapy issue... should be a better solution
+        try:
+            plot_spectrum_datasets_off_regions(ax=ax, datasets=veritas.datasets)
+        except KeyError:
+            pass
 
     if fermi is not None:
         if veritas is not None:
