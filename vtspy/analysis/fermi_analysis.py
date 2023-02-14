@@ -26,7 +26,9 @@ from gammapy.modeling import Fit
 try:
     from fermipy.gtanalysis import GTAnalysis
 except:
-    logging.warning("Fermitools is not installed. Any Fermi-LAT related analysis cannot be performed.")
+    # Logging not defined, will throw an error
+    # logging.warning("Fermitools is not installed. Any Fermi-LAT related analysis cannot be performed.")
+    print ("Fermitools is not installed. Any Fermi-LAT related analysis cannot be performed.")
 
 import fermipy.wcs_utils as wcs_utils
 import fermipy.utils as fermi_utils
