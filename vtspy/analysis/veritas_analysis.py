@@ -270,8 +270,20 @@ class VeritasAnalysis:
             self._logging.info("The hdu-index and obs-index files are created.")
 
         self._data_store = DataStore.from_dir(f"{self._datadir}")
+        _selection = self._data_store.obs_table.select_observations(selection)
 
-        self._obs_ids = np.asarray(self._data_store.obs_table.select_observations(selection)["OBS_ID"]).astype("int")
+        # Check for a time cut
+        if self.config["selection"]["time_cuts"] is not None:
+            _selection = _selection.select_time_range(
+                    Time([
+                        self.config["selection"]["time_cuts"]["tstart"], 
+                        self.config["selection"]["time_cuts"]["tstop"]
+                        ],
+                    format = "mjd"),
+                    inverted = self.config["selection"]["time_cuts"]["invert"]
+                )
+
+        self._obs_ids = np.asarray(_selection["OBS_ID"]).astype("int")
         
         self.observations = self._data_store.get_observations(self._obs_ids, required_irf=["aeff", "edisp"])
 
