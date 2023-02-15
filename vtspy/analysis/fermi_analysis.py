@@ -389,7 +389,7 @@ class FermiAnalysis():
         if return_output:
             return o
 
-    def analysis(self, jobs = ["ts", "resid", "sed"], status_file="analyzed", **kwargs):
+    def analysis(self, jobs = ["ts", "resid", "sed", "lc"], status_file="analyzed", **kwargs):
         """
         Perform various analyses: TS map, Residual map, and SED.
 
@@ -427,6 +427,12 @@ class FermiAnalysis():
             o = self._calc_sed(outfile=outfile, **kwargs)
             output['sed'] = o
 
+        if "lc" in jobs:
+            outfile=status_file+"_lc.fits"
+            # o = self._lightcurve(outfile=outfile, **kwargs)
+            o = self._lightcurve( **kwargs)
+            output['lc'] = o
+
         self.gta.set_free_param_vector(free)
 
         self.output = output
@@ -457,7 +463,7 @@ class FermiAnalysis():
 
         list_of_fig = ["sqrt_ts", "npred", "ts_hist",
                         "data", "model", "sigma", "excess", "resid",
-                        "sed"]
+                        "sed", "lc"]
 
         if type(output) == str:
             output = [output]
@@ -590,10 +596,10 @@ class FermiAnalysis():
             target = self.target_name
 
         free_radius = kwargs.pop("free_radius", 3.0)
-
+        
         self.gta.free_sources(free=False)
         self.gta.free_sources(pars="norm")
-
+        # self.gta.free_source(target)
         o = self.gta.lightcurve(target, free_radius=free_radius, multithread=True,
             nthread=4, use_scaled_srcmap=True, **kwargs)
 
