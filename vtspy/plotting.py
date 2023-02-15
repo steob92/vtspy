@@ -31,7 +31,6 @@ def fermi_plotter(name, fermi, subplot = None, **kwargs):
         AxesSubplot
     """
     from fermipy.plotting import ROIPlotter, SEDPlotter
-
     output = fermi.output
     roi = fermi.gta.roi
     config = fermi.gta.config
@@ -97,6 +96,11 @@ def fermi_plotter(name, fermi, subplot = None, **kwargs):
     if name == "sed":
         kwargs.pop('cmap')
         plot_sed(output, **kwargs)
+        ax = plt.gca()
+
+    if name == "lc":
+        kwargs.pop('cmap')
+        plot_lc(output, **kwargs)
         ax = plt.gca()
 
     return ax
@@ -251,6 +255,60 @@ def plot_sed(output, show_model=True, show_band=True, show_flux_points=True, erg
 
     plt.xlabel(f"Energy [{units}]", fontsize=13)
     plt.ylabel(f"Energy flux [{flux_label}]", fontsize=13)
+
+    fig = plt.gcf()
+    return fig
+
+
+
+def plot_lc(output, show_flux_points=True, erg=False, units="MeV", color="k", eflux=True, **kwargs):
+
+    lc = output["lc"]
+  
+
+    if units == "MeV":
+        energy_units = u.MeV
+    elif units == "GeV":
+        energy_units = u.GeV
+    elif units == "TeV":
+        energy_units = u.TeV
+
+    if erg:
+        flux_units = u.erg/u.cm**2/u.second
+        flux_label = "erg/cm$^2$/s"
+    else:
+        flux_units = energy_units/u.cm**2/u.second
+        flux_label = f"{units}/cm$^2$/s"
+
+    ul_ts_threshold = kwargs.pop('ul_ts_threshold', 9)
+    m = lc['ts'] < ul_ts_threshold
+
+    x = lc['tmin_mjd'] + 0.5*(lc["tmax_mjd"] - lc["tmin_mjd"])
+    xerr = 0.5*(lc["tmax_mjd"] - lc["tmin_mjd"])
+    if erg:
+        y = (lc['eflux']*u.erg/u.cm**2/u.second).to(flux_units)
+        yerr = (lc['eflux_err']*u.erg/u.cm**2/u.second).to(flux_units)
+        yul = (lc['eflux_ul95']*u.erg/u.cm**2/u.second).to(flux_units)
+    else:
+        y = (lc['flux']*u.erg/u.cm**2/u.second).to(flux_units)
+        yerr = (lc['flux_err']*u.erg/u.cm**2/u.second).to(flux_units)
+        yul = (lc['flux_ul95']*u.erg/u.cm**2/u.second).to(flux_units)
+        
+
+    ul_scale = 0.5*10**np.floor(np.log10(np.max(y[~m].value)))
+
+    plt.errorbar(x[~m], y[~m], xerr=xerr[~m], label="Fermi-LAT",
+                    yerr=yerr[~m], ls="", color=color)
+    plt.errorbar(x[m], yul[m].value, xerr=xerr[m],
+                    yerr=ul_scale, uplims=True, ls="", color=color)
+
+
+    plt.legend(fontsize=13)
+    plt.grid(which="major", ls="-")
+    plt.grid(which="minor", ls=":")
+
+    plt.xlabel(f"MJD", fontsize=13)
+    plt.ylabel(f"Flux [{flux_label}]", fontsize=13)
 
     fig = plt.gcf()
     return fig
